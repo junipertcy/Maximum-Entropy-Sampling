@@ -1,5 +1,5 @@
 """
-## Maximum Entropy Sampling Algorithm
+## Maximum Entropy Sampling Algorithm (origially written by F. Radicchi)
 The code below implements the maximum entropy sampling algorith. It makes use of the submodularity of the entropy
 function to implement a lazy greedy search. A rooted tree in a potential node to sample is constructed using a
 Dijkstra-like algorithm. The main function returns two dictionaries with keys given by the labels of the nodes.
@@ -91,7 +91,8 @@ def compute_score_dijkstra(i, G, cond_entropy, observed, vector_observed):
                         source[m] = source[current]
                         if vector_observed[current] > 0 or current == i:
                             source[m] = current
-                        distance[m] = distance[current] + cond_entropy[m, source[m]]
+                        if source[m] is not None:
+                            distance[m] = distance[current] + cond_entropy[m, source[m]]
 
                     else:
                         if vector_observed[current] > 0 or current == i:
@@ -102,10 +103,11 @@ def compute_score_dijkstra(i, G, cond_entropy, observed, vector_observed):
                                 distance[m] = distance[current] + cond_entropy[m, current]
                         else:
                             # delta = cond_entropy[m, source[current]] - cond_entropy[m, source[m]]
-                            delta = distance[current] + cond_entropy[m, source[current]] - distance[m]
-                            if delta < 0:
-                                source[m] = source[current]
-                                distance[m] = distance[current] + cond_entropy[m, source[m]]
+                            if source[current] is not None:
+                                delta = distance[current] + cond_entropy[m, source[current]] - distance[m]
+                                if delta < 0:
+                                    source[m] = source[current]
+                                    distance[m] = distance[current] + cond_entropy[m, source[m]]
 
                 else:
                     source[m] = source[current]
@@ -117,7 +119,8 @@ def compute_score_dijkstra(i, G, cond_entropy, observed, vector_observed):
 
     score = 0.0
     for m in observed:
-        score = score + cond_entropy[m, source[m]]
+        if source[m] is not None:
+            score = score + cond_entropy[m, source[m]]
 
     return score
 
@@ -380,3 +383,4 @@ def random_sampling(G, marg_entropy, cond_entropy):
     print("--- %s seconds ---" % (time.time() - start_time))
 
     return rank, value, list_observed
+
